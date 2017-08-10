@@ -32,20 +32,16 @@
 
 #### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
 
-Here is an example of how to include an image in your writeup.
+## Test Images Showing Labeling
 
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
-
-
-
-
-Here's | A | Snappy | Table
---- | --- | --- | ---
-1 | `highlight` | **bold** | 7.41
-2 | a | b | c
-3 | *italic* | text | 403
-4 | 2 | 3 | abcd
-
+| ***Test Output*** |
+|:-------------:|
+| ![Test 1](output/test1.png) |
+| ***Test 1*** |
+| ![Test 2](output/test2a.png) |
+| ***Test 2*** |
+| ![Test 3](output/test3a.png) |
+| ***Test 3*** |
 
 Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
 
