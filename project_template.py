@@ -290,13 +290,12 @@ def pr2_mover(detected_objects_list):
 	print "Request to pick up %s in group %s" % (object_name.data, object_group.data)
 
     	# Rotate PR2 in place to capture side tables for the collision map
-	"""
-	Very slow, removed for now...
-	print "Sending command to scan for obstacles..."
-	dtime1 = turn_pr2(np.pi/2.0)
-        dtime2 = turn_pr2(-np.pi/2.0)
-        dtime3 = turn_pr2(0.0)
-	"""
+	if with_collision_map == True:
+		print "Sending command to scan for obstacles..."
+		dtime1 = turn_pr2(np.pi/2.0)	# right
+        	dtime2 = turn_pr2(-np.pi/2.0)	# left
+        	dtime3 = turn_pr2(0.0)		# back home
+	
    	# Loop through the pick list and look for the requested object
 	success_count = 0
     	for the_object in detected_objects_list:
@@ -328,7 +327,7 @@ def pr2_mover(detected_objects_list):
 		pick_pose.position.y = centroid[1]
 		pick_pose.position.z = centroid[2]
 
-		print "Scene %d, %s arm, picking up found object %s" % (test_scene_num.data, arm_name.data, object_name.data)
+		print "Scene %d,picking up object %s that I found, with %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
 
         	# Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
@@ -363,7 +362,8 @@ def pr2_mover(detected_objects_list):
 
 if __name__ == '__main__':
 
-	pipeline_only = False	# for testing, just do the recoginition pipeline and skip PR2 movement
+	pipeline_only = False		# for testing, just do the recoginition pipeline and skip PR2 movement
+	with_collision_map = False	# also calculate the collision map
 
 	# Parse arguments
 
@@ -371,6 +371,10 @@ if __name__ == '__main__':
 		if sys.argv[1] == "pipeline_only":
 			pipeline_only = True
 			print "Running pipeline only"
+		if sys.argv[1] == "with_collision_map":
+			with_collision_map = True
+			print "With Collision map"
+
 
 	# ROS node initialization
 
@@ -388,6 +392,8 @@ if __name__ == '__main__':
 	pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
 	pcl_table_pub = rospy.Publisher("/pcl_table", PointCloud2, queue_size=1)
 	pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
+	pcl_collision_pub = rospy.Publisher("/pr2/3d_map/points", PointCloud2, queue_size=1)
+	
 	pub_body = rospy.Publisher('/pr2/world_joint_controller/command', Float64, queue_size=1)
 
 	# Create object_markers_pub and detected_objects_pub
