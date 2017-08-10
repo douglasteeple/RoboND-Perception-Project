@@ -23,26 +23,25 @@ from std_msgs.msg import Int32
 from std_msgs.msg import String
 from pr2_robot.srv import *
 from rospy_message_converter import message_converter
+from sensor_msgs.msg import JointState
 import yaml
 import random
 
-# movement support routines
+# PR2 movement support routines
 
-def at_goal(pos_j1, goal_j1, pos_j2, goal_j2):
+def at_goal(pos, goal):
     tolerance = .05
-    result = abs(pos_j1 - goal_j1) <= abs(tolerance)
-    result = result and abs(pos_j2 - goal_j2) <= abs(tolerance)
+    result = abs(pos - goal) <= abs(tolerance)
     return result
 
-
-def move_arms(pos_j1, pos_j2):
+def turn_pr2(pos):
     time_elapsed = rospy.Time.now()
-    j1_publisher.publish(pos_j1)
-    j2_publisher.publish(pos_j2)
+    pub_body.publish(pos)
 
     while True:
-        joint_state = rospy.wait_for_message('/pr2/world_joint_controller/joint_states', JointState)
-        if at_goal(joint_state.position[0], pos_j1, joint_state.position[1], pos_j2):
+        joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
+	#print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
+        if at_goal(joint_state.position[19], pos):
             time_elapsed = joint_state.header.stamp - time_elapsed
             break
 
@@ -191,6 +190,7 @@ def pcl_callback(pcl_msg):
 
 	# Exercise-3 TODOs: 
 
+	detected_objects = []
 	# Classify the clusters! (loop through each detected cluster one at a time)
 	for index, pts_list in enumerate(cluster_indices):
 		# Grab the points for the cluster
@@ -237,18 +237,18 @@ def pcl_callback(pcl_msg):
 		rospy.loginfo('Detected {} objects: {}'.format(len(detected_objects_labels), detected_objects_labels))
 
 		# Publish the list of detected objects
-		# This is the output you'll need to complete the upcoming project!
 		detected_objects_pub.publish(detected_objects)
 
 
-		# Suggested location for where to invoke your pr2_mover() function within pcl_callback()
-		# Added logic to determine whether or not your object detections are robust
-		# before calling pr2_mover()
-		try:
-			if len(detected_objects) > 0:
-				pr2_mover(detected_objects)
-		except rospy.ROSInterruptException:
-			pass
+	# Suggested location for where to invoke your pr2_mover() function within pcl_callback()
+	# Added logic to determine whether or not your object detections are robust
+	# before calling pr2_mover()
+	try:
+		if len(detected_objects) > 0:
+			pr2_mover(detected_objects)
+			detected_objects = []
+	except rospy.ROSInterruptException:
+		pass
 
 	return
 
@@ -260,7 +260,6 @@ def pr2_mover(detected_objects_list):
     centroids = [] # to be list of tuples (x, y, z)
     dict_list = []
     test_scene_num = Int32()
-    test_scene_num.data = 1
     object_name = String()
     object_group = String()
     arm_name = String()
@@ -270,6 +269,8 @@ def pr2_mover(detected_objects_list):
     # get parameters
     # the objects that we must pick up
     object_list_param = rospy.get_param('/object_list')
+    # scene number from modified launch file
+    test_scene_num.data = rospy.get_param('/test_scene_num')
 
     request_count = 0
     for i in range(len(object_list_param)):
@@ -277,14 +278,15 @@ def pr2_mover(detected_objects_list):
     	# Parse parameters into individual variables
 	object_name.data = object_list_param[i]['name']
 	object_group.data = object_list_param[i]['group']
-	print("Request to pick up %s in group %s" % (object_name.data, object_group.data))
+	print "Request to pick up %s in group %s" % (object_name.data, object_group.data)
 
     	# Rotate PR2 in place to capture side tables for the collision map
-	pub_body = rospy.Publisher('/pr2/world_joint_controller/command', Float64, queue_size=3)
-	print("Sending command to scan for obstacles...")
-        pub_body.publish(np.pi/2.0)
-        pub_body.publish(-np.pi/2.0)
-        pub_body.publish(0.0)
+
+	print "Sending command to scan for obstacles..."
+	dtime1 = turn_pr2(np.pi/2.0)
+        dtime2 = turn_pr2(-np.pi/2.0)
+        dtime3 = turn_pr2(0.0)
+	print "Motion took %f %f %f msec" % (dtime1, dtime2, dtime3)
 
    	# Loop through the pick list and look for the requested object
     	for the_object in detected_objects_list:
@@ -304,12 +306,12 @@ def pr2_mover(detected_objects_list):
 		if object_group.data == 'green':
 		    arm_name.data = 'right'
 		    place_pose.position.x = -0.1+random.random()/10.0
-		    place_pose.position.y = -0.71+random.random()/10.0
+		    place_pose.position.y = -0.71
 		    place_pose.position.z = 0.605
 		else:
 		    arm_name.data = 'left'
-		    place_pose.position.x = -0.1+random.random()10.0
-		    place_pose.position.y = 0.71+random.random()/10.0
+		    place_pose.position.x = -0.1+random.random()/10.0
+		    place_pose.position.y = 0.71
 		    place_pose.position.z = 0.605
 
 		pick_pose.position.x = centroid[0]
@@ -344,7 +346,7 @@ def pr2_mover(detected_objects_list):
 
 	print "Scene %d: %d of %d objects moved to bin." % (test_scene_num.data, match_count, request_count)
 
-    return
+    return resp.success
 
 if __name__ == '__main__':
 
@@ -364,10 +366,10 @@ if __name__ == '__main__':
 	pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
 	pcl_table_pub = rospy.Publisher("/pcl_table", PointCloud2, queue_size=1)
 	pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
+	pub_body = rospy.Publisher('/pr2/world_joint_controller/command', Float64, queue_size=1)
 
-	# Create Publishers
-	# Call them object_markers_pub and detected_objects_pub
-	# Have them publish to "/object_markers" and "/detected_objects", respectively
+	# Create object_markers_pub and detected_objects_pub
+	# Publish to "/object_markers" and "/detected_objects", respectively
 	object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
 	detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
 
@@ -385,5 +387,4 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		rospy.spin()
-
 
