@@ -327,7 +327,7 @@ def pr2_mover(detected_objects_list):
 		pick_pose.position.y = centroid[1]
 		pick_pose.position.z = centroid[2]
 
-		print "Scene %d,picking up object %s that I found, with %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
+		print "Scene %d, picking up object %s that I found, with my %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
 
         	# Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
@@ -374,6 +374,8 @@ if __name__ == '__main__':
 		if sys.argv[1] == "with_collision_map":
 			with_collision_map = True
 			print "With Collision map"
+		if sys.argv[1] == "help":
+			print "%s: [ pipeline_only | with_collision_map ]" % sys.argv[0]
 
 
 	# ROS node initialization
