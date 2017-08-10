@@ -240,16 +240,16 @@ def pcl_callback(pcl_msg):
 		detected_objects_pub.publish(detected_objects)
 
 
-	# Suggested location for where to invoke your pr2_mover() function within pcl_callback()
-	# Added logic to determine whether or not your object detections are robust
+	# Add some logic to determine whether or not the object detections are robust
 	# before calling pr2_mover()
 	try:
-		if len(detected_objects) > 0:
+		if not pipeline_only and len(detected_objects) > 0:
 			pr2_mover(detected_objects)
-			detected_objects = []
+
 	except rospy.ROSInterruptException:
 		pass
 
+	detected_objects = []
 	return
 
 # function to load parameters and request PickPlace service
@@ -325,6 +325,7 @@ def pr2_mover(detected_objects_list):
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
 		dict_list.append(yaml_dict)
 
+	
         	# Wait for 'pick_place_routine' service to come up
         	rospy.wait_for_service('pick_place_routine')
 
@@ -352,6 +353,15 @@ def pr2_mover(detected_objects_list):
     return
 
 if __name__ == '__main__':
+
+	pipeline_only = False	# for testing, just do the recoginition pipeline and skip PR2 movement
+
+	# Parse arguments
+
+	if len(sys.argv) >= 2:
+		if sys.argv[1] == "pipeline_only":
+			pipeline_only = True
+			print "Running pipeline only"
 
 	# ROS node initialization
 
