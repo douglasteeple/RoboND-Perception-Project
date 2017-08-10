@@ -8,9 +8,9 @@ object_list:
       y: 0.0
       z: 0.0
     position:
-      x: 0.5420134663581848
-      y: -0.24281832575798035
-      z: 0.7046263217926025
+      x: 0.5422409772872925
+      y: -0.24230962991714478
+      z: 0.7053117752075195
   place_pose:
     orientation:
       w: 0.0
@@ -20,5 +20,51 @@ object_list:
     position:
       x: -0.1
       y: -0.71
+      z: 0.605
+  test_scene_num: 1
+- arm_name: right
+  object_name: soap
+  pick_pose:
+    orientation:
+      w: 0.0
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    position:
+      x: 0.5407626032829285
+      y: -0.020037328824400902
+      z: 0.6735755801200867
+  place_pose:
+    orientation:
+      w: 0.0
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    position:
+      x: -0.1
+      y: -0.71
+      z: 0.605
+  test_scene_num: 1
+- arm_name: left
+  object_name: soap2
+  pick_pose:
+    orientation:
+      w: 0.0
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    position:
+      x: 0.44517120718955994
+      y: 0.22279632091522217
+      z: 0.6767338514328003
+  place_pose:
+    orientation:
+      w: 0.0
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    position:
+      x: -0.1
+      y: 0.71
       z: 0.605
   test_scene_num: 1
