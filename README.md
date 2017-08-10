@@ -36,11 +36,11 @@
 
 | ***Test Output*** |
 |:-------------:|
-| ![Test 1](output/test1.png) |
+| ![Test 1](output/test1objects.png) |
 | ***Test 1*** |
-| ![Test 2](output/test2a.png) |
+| ![Test 2](output/test2aobjects.png) |
 | ***Test 2*** |
-| ![Test 3](output/test3a.png) |
+| ![Test 3](output/test3aobjects.png) |
 | ***Test 3*** |
 
 Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
