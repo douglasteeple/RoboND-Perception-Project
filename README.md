@@ -24,24 +24,37 @@
 14. Place all the objects from your pick list in their respective dropoff box and you have completed the challenge!
 15. Looking for a bigger challenge?  Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
 
-### Exercise 1, 2 and 3 Pipeline
+### Recognition Pipeline
 
-#### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
+#### 1. Exercise 1. 
 
-#### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
+Pipeline for filtering and RANSAC plane fitting implemented.
 
-#### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
+#### 2. Exercise 2: 
+
+Pipeline including clustering for segmentation implemented.  
+
+#### 3. Exercise 3  
+
+Features extracted and SVM trained.  Object recognition implemented.
+
+<center>
+
+| ***Confusion Matrix*** |
+|:-------------:|
+| ![Confusion Matrix](output/ConfusionMatrix.png) |
+| *** 76% score, not great, but adequate *** |
 
 ## Test Images Showing Labeling
 
 | ***Test Output*** |
 |:-------------:|
 | ![Test 1](output/test1objects.png) |
-| ***Test 1*** |
+| ***Test 1 -  3 of 3 objects found and labeled *** |
 | ![Test 2](output/test2aobjects.png) |
-| ***Test 2*** |
+| ***Test 2 - 5 of 5 objects found and labeled *** |
 | ![Test 3](output/test3aobjects.png) |
-| ***Test 3*** |
+| ***Test 3 - 8 of 8 objects found and labeled *** |
 
 Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
 
