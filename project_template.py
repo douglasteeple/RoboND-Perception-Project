@@ -282,6 +282,7 @@ def pr2_mover(detected_objects_list):
     test_scene_num.data = rospy.get_param('/test_scene_num')
 
     request_count = 0
+    success_count = 0
     for i in range(len(object_list_param)):
 	request_count += 1
     	# Parse parameters into individual variables
@@ -297,7 +298,6 @@ def pr2_mover(detected_objects_list):
         	dtime3 = turn_pr2(0.0)		# back home
 	
    	# Loop through the pick list and look for the requested object
-	success_count = 0
     	for the_object in detected_objects_list:
 	    match_count = 0
 	    if the_object.label == object_name.data:
@@ -314,12 +314,12 @@ def pr2_mover(detected_objects_list):
         	# Assign the arm to be used for pick_place
 		if object_group.data == 'green':
 		    arm_name.data = 'right'
-		    place_pose.position.x = -0.1-float(success_count)*0.1	# move back a little bit for each object
+		    place_pose.position.x = -0.1-float(success_count)*0.2	# move back a little bit for each object
 		    place_pose.position.y = -0.71				# so as not to stack...
 		    place_pose.position.z = 0.605
 		else:
 		    arm_name.data = 'left'
-		    place_pose.position.x = -0.1-float(success_count)*0.1
+		    place_pose.position.x = -0.1-float(success_count)*0.2
 		    place_pose.position.y = 0.71
 		    place_pose.position.z = 0.605
 
@@ -376,7 +376,7 @@ if __name__ == '__main__':
 			print "With Collision map"
 		if sys.argv[1] == "help":
 			print "%s: [ pipeline_only | with_collision_map ]" % sys.argv[0]
-
+			exit()
 
 	# ROS node initialization
 
