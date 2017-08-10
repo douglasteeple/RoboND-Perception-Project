@@ -282,12 +282,14 @@ def pr2_mover(detected_objects_list):
 
     	# Rotate PR2 in place to capture side tables for the collision map
 	"""
+	Very slow, removed for now...
 	print "Sending command to scan for obstacles..."
 	dtime1 = turn_pr2(np.pi/2.0)
         dtime2 = turn_pr2(-np.pi/2.0)
         dtime3 = turn_pr2(0.0)
 	"""
    	# Loop through the pick list and look for the requested object
+	success_count = 0
     	for the_object in detected_objects_list:
 	    match_count = 0
 	    if the_object.label == object_name.data:
@@ -304,12 +306,12 @@ def pr2_mover(detected_objects_list):
         	# Assign the arm to be used for pick_place
 		if object_group.data == 'green':
 		    arm_name.data = 'right'
-		    place_pose.position.x = -0.1+random.random()/10.0
-		    place_pose.position.y = -0.71
+		    place_pose.position.x = -0.1-float(success_count)*0.1	# move back a little bit for each object
+		    place_pose.position.y = -0.71				# so as not to stack...
 		    place_pose.position.z = 0.605
 		else:
 		    arm_name.data = 'left'
-		    place_pose.position.x = -0.1+random.random()/10.0
+		    place_pose.position.x = -0.1-float(success_count)*0.1
 		    place_pose.position.y = 0.71
 		    place_pose.position.z = 0.605
 
@@ -317,7 +319,7 @@ def pr2_mover(detected_objects_list):
 		pick_pose.position.y = centroid[1]
 		pick_pose.position.z = centroid[2]
 
-		print "Scene %d, %s arm, object %s" % (test_scene_num.data, arm_name.data, object_name.data)
+		print "Scene %d, %s arm, picking up found object %s" % (test_scene_num.data, arm_name.data, object_name.data)
 
         	# Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
@@ -333,6 +335,8 @@ def pr2_mover(detected_objects_list):
 			resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
 
 			print "Response to pick_place_routine service request: ", resp.success
+			if resp.success == True:
+				success_count += 1
 
         	except rospy.ServiceException, e:
 			print "Service call failed: %s" % e
@@ -343,9 +347,9 @@ def pr2_mover(detected_objects_list):
     	# Output your request parameters into output yaml file
     	send_to_yaml('output_%d.yaml' % test_scene_num.data, dict_list)
 
-	print "Scene %d: %d of %d objects moved to bin." % (test_scene_num.data, match_count, request_count)
+	print "Scene %d: %d of %d objects moved to bin, success count: %s." % (test_scene_num.data, match_count, request_count, success_count)
 
-    return resp.success
+    return
 
 if __name__ == '__main__':
 
