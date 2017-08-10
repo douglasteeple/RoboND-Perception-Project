@@ -332,23 +332,24 @@ def pr2_mover(detected_objects_list):
         	# Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
 		dict_list.append(yaml_dict)
-
+		
+		if yaml_only == False:
 	
-        	# Wait for 'pick_place_routine' service to come up
-        	rospy.wait_for_service('pick_place_routine')
+        		# Wait for 'pick_place_routine' service to come up
+        		rospy.wait_for_service('pick_place_routine')
 
-		try:
-			pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
+			try:
+				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
-			# Insert message variables to be sent as a service request
-			resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
+				# Insert message variables to be sent as a service request
+				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
 
-			print "Response to pick_place_routine service request: ", resp.success
-			if resp.success == True:
-				success_count += 1
+				print "Response to pick_place_routine service request: ", resp.success
+				if resp.success == True:
+					success_count += 1
 
-        	except rospy.ServiceException, e:
-			print "Service call failed: %s" % e
+        		except rospy.ServiceException, e:
+				print "Service call failed: %s" % e
 
 	    if match_count == 0:
 		print "Could not find %s in detected objects." % object_name.data
@@ -364,6 +365,7 @@ if __name__ == '__main__':
 
 	pipeline_only = False		# for testing, just do the recoginition pipeline and skip PR2 movement
 	with_collision_map = False	# also calculate the collision map
+	yaml_only = False		# true if only yaml output is desired, and no robot motion
 
 	# Parse arguments
 
@@ -374,6 +376,9 @@ if __name__ == '__main__':
 		if sys.argv[1] == "with_collision_map":
 			with_collision_map = True
 			print "With Collision map"
+		if sys.argv[1] == "yaml_only":
+			yaml_only = True
+			print "YAML only"
 		if sys.argv[1] == "help":
 			print "%s: [ pipeline_only | with_collision_map ]" % sys.argv[0]
 			exit()
