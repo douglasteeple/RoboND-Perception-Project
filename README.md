@@ -49,7 +49,7 @@ Features extracted and SVM trained.  Object recognition implemented.
 
 | ***Test Output*** |
 |:-------------:|
-| ![Test 1](output/test1objects.png) |
+| ![Test 1](output/test1aobjects.png) |
 | ***Test 1 -  3 of 3 objects found and labeled *** |
 | ![Test 2](output/test2aobjects.png) |
 | ***Test 2 - 5 of 5 objects found and labeled *** |
