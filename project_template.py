@@ -281,13 +281,12 @@ def pr2_mover(detected_objects_list):
 	print "Request to pick up %s in group %s" % (object_name.data, object_group.data)
 
     	# Rotate PR2 in place to capture side tables for the collision map
-
+	"""
 	print "Sending command to scan for obstacles..."
 	dtime1 = turn_pr2(np.pi/2.0)
         dtime2 = turn_pr2(-np.pi/2.0)
         dtime3 = turn_pr2(0.0)
-	print "Motion took %f %f %f msec" % (dtime1, dtime2, dtime3)
-
+	"""
    	# Loop through the pick list and look for the requested object
     	for the_object in detected_objects_list:
 	    match_count = 0
