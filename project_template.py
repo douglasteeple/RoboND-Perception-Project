@@ -351,13 +351,11 @@ def pr2_mover(detected_objects_list):
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 
-	    if match_count == 0:
-		print "Could not find %s in detected objects." % object_name.data
 
     	# Output your request parameters into output yaml file
     	send_to_yaml('output_%d.yaml' % test_scene_num.data, dict_list)
 
-	print "Scene %d: %d of %d objects moved to bin, success count: %s." % (test_scene_num.data, match_count, request_count, success_count)
+	print "Scene %d: %d of %d objects moved to bin." % (test_scene_num.data, success_count, request_count)
 
     return
 
