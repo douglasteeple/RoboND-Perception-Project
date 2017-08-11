@@ -1,9 +1,7 @@
-# RoboND-Perception-Project
-## Project: Perception Pick & Place
-
+# RoboND-Perception-Project - Perception Pick & Place
 ---
 
-## The Steps Demonstrated in project_template.py:
+## Steps Demonstrated in project_template.py:
 
 1. Extracted features and train an SVM model on new objects in `pick_list_*.yaml` in `/pr2_robot/config/`.  I left the sensor_stick project in the src directory, changed the list of models and extracted HSV color and surface normals histogram features, and saved to models.sav. I then reran the svm classifier to create the training set. I only got 76% in the cnofusion matrix, but still that proved to be adequate. See Excercise 3 below for details.
 2. Created a ROS node and subscribed to the `/pr2/world/points` topic. This topic contains noisy point cloud data that is filtered with a statistical output filter.
@@ -26,7 +24,7 @@ The steps are the following:
 2. Add a statistical outlier filter to remove noise from the data.
 3. Apply a Passthrough Filter to isolate the table and objects.
 4. Perform RANSAC plane fitting to identify the table.
-5. Use the ExtractIndices Filter to create new point clouds containing the table and objects separately.
+5. Use the Passthrough Filter to create new point clouds containing the table and objects separately.
 ```
 
 	# Convert ROS msg to PCL data
