@@ -14,76 +14,7 @@
 7. Created ROS messages containing the details of each object (name, pick_pose, etc.) and writes these messages out to `.yaml` files, one for each of the 3 scenarios (`test1-3.world` in `/pr2_robot/worlds/`).
 8. I created a project in my GitHub repo for the project including the Python code for your perception pipeline and the output `.yaml` files (3 `.yaml` files, one for each test world).  I have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, over 80% of items from `pick_list_2.yaml` for `test2.world` and over 75% of items from `pick_list_3.yaml` in `test3.world`. The YAML output files are shown later in the results section.
 
-## Extra Challenges: The Pick & Place
-
-9. I created a collision map by publishing a point cloud to the `/pr2/3d_map/points` topic and changed the `point_cloud_topic` to `/pr2/3d_map/points` in `sensors.yaml` in the `/pr2_robot/config/` directory. This topic is read by Moveit!, which uses this point cloud input to generate a collision map, allowing the robot to plan its trajectory.  The issue here is that when you go to pick up an object, you must first remove it from this point cloud so it is removed from the collision map!
-10. I rotated the robot to generate collision map of table sides. This was accomplished by publishing joint angle value (in radians) to `/pr2/world_joint_controller/command`. I adapted the code from a prvious project to pr=erform the movement:
-```
-# PR2 movement support routines
-
-def at_goal(pos, goal):
-    tolerance = .05
-    result = abs(pos - goal) <= abs(tolerance)
-    return result
-
-def turn_pr2(pos):
-    time_elapsed = rospy.Time.now()
-    pub_body.publish(pos)
-
-    while True:
-        joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
-	      #print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
-        if at_goal(joint_state.position[19], pos):
-            time_elapsed = joint_state.header.stamp - time_elapsed
-            break
-
-    return time_elapsed
-```
-I then called `turn_pr2` in the project_template.py `pr_mover()` function:
-```
-    	# Rotate PR2 in place to capture side tables for the collision map
-	if with_collision_map == True:
-		print "Sending command to scan for obstacles..."
-		dtime1 = turn_pr2(np.pi/2.0)	# right
-    		dtime2 = turn_pr2(-np.pi/2.0)	# left
-    		dtime3 = turn_pr2(0.0)		# back home
-```
-Note that this code is conditionally called as it is very slow to execute.
-
-11. I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
-12. I created a ROS Client for the “pick_place_routine” rosservice:
-```
-	
-		if yaml_only == False:
-	
-        		# Wait for 'pick_place_routine' service to come up
-        		rospy.wait_for_service('pick_place_routine')
-
-			try:
-				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
-
-```
-13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
-```
-				# Insert message variables to be sent as a service request
-				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
-
-				print "Response to pick_place_routine service request: ", resp.success
-				if resp.success == True:
-					success_count += 1
-
-        		except rospy.ServiceException, e:
-				print "Service call failed: %s" % e
-```
-14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge.
-![Test1 Results](output/test1results.jpg)
-
-15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
-![Challenge World](output/challenge.jpg)
-
-But, it required more changes and tuning than I could accomplish in time...
-
-### Recognition Pipeline
+## Recognition Pipeline
 
 #### Step 1.
 
@@ -714,6 +645,75 @@ object_list:
       z: 0.605
   test_scene_num: 3
   ```
+
+### Extra Challenges: The Pick & Place
+
+9. I created a collision map by publishing a point cloud to the `/pr2/3d_map/points` topic and changed the `point_cloud_topic` to `/pr2/3d_map/points` in `sensors.yaml` in the `/pr2_robot/config/` directory. This topic is read by Moveit!, which uses this point cloud input to generate a collision map, allowing the robot to plan its trajectory.  The issue here is that when you go to pick up an object, you must first remove it from this point cloud so it is removed from the collision map!
+10. I rotated the robot to generate collision map of table sides. This was accomplished by publishing joint angle value (in radians) to `/pr2/world_joint_controller/command`. I adapted the code from a prvious project to pr=erform the movement:
+```
+# PR2 movement support routines
+
+def at_goal(pos, goal):
+    tolerance = .05
+    result = abs(pos - goal) <= abs(tolerance)
+    return result
+
+def turn_pr2(pos):
+    time_elapsed = rospy.Time.now()
+    pub_body.publish(pos)
+
+    while True:
+        joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
+	      #print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
+        if at_goal(joint_state.position[19], pos):
+            time_elapsed = joint_state.header.stamp - time_elapsed
+            break
+
+    return time_elapsed
+```
+I then called `turn_pr2` in the project_template.py `pr_mover()` function:
+```
+    	# Rotate PR2 in place to capture side tables for the collision map
+	if with_collision_map == True:
+		print "Sending command to scan for obstacles..."
+		dtime1 = turn_pr2(np.pi/2.0)	# right
+    		dtime2 = turn_pr2(-np.pi/2.0)	# left
+    		dtime3 = turn_pr2(0.0)		# back home
+```
+Note that this code is conditionally called as it is very slow to execute.
+
+11. I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
+12. I created a ROS Client for the “pick_place_routine” rosservice:
+```
+	
+		if yaml_only == False:
+	
+        		# Wait for 'pick_place_routine' service to come up
+        		rospy.wait_for_service('pick_place_routine')
+
+			try:
+				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
+
+```
+13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
+```
+				# Insert message variables to be sent as a service request
+				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
+
+				print "Response to pick_place_routine service request: ", resp.success
+				if resp.success == True:
+					success_count += 1
+
+        		except rospy.ServiceException, e:
+				print "Service call failed: %s" % e
+```
+14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge.
+![Test1 Results](output/test1results.jpg)
+
+15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
+![Challenge World](output/challenge.jpg)
+
+But, it required more changes and tuning than I could accomplish in time...
 
 ### Next Steps
 
