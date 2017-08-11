@@ -217,7 +217,7 @@ I ran the train_svm.py model to train an SVM classifier on the labeled set of fe
 
 I implemented the `compute_color_histograms()` and `compute_normal_histograms()` functions within features.py in /sensor_stick/src/sensor_stick to generate correct histogram results. 
 
-### Modifications `main`
+#### Modifications to `main`
 
 I added argument parsing to main to selectivley excercise various parts of the pipeline:
 ```
@@ -251,7 +251,7 @@ I added argument parsing to main to selectivley excercise various parts of the p
 | ![Confusion Matrix](output/ConfusionMatrix.png) |
 | *** 76% score, not great, but adequate *** |
 
-## Test Images Showing Labeling
+#### Test Images Showing Labeling
 
 | ***Test Output*** |
 |:-------------:|
@@ -262,7 +262,7 @@ I added argument parsing to main to selectivley excercise various parts of the p
 | ![Test 3](output/test3aobjects.png) |
 | ***Test 3 - 8 of 8 objects found and labeled *** |
 
-### Test 1 YAML
+#### Test 1 YAML
 
 ```
 object_list:
@@ -337,7 +337,7 @@ object_list:
   test_scene_num: 1
 ```
 
-### Test 2 YAML
+#### Test 2 YAML
 
 ```object_list:
 - arm_name: right
@@ -456,7 +456,7 @@ object_list:
       z: 0.605
   test_scene_num: 2
 ```
-### Test 3 YAML
+#### Test 3 YAML
 
 ```
 object_list:
@@ -717,7 +717,10 @@ But, it required more changes and tuning than I could accomplish in time...
 
 ### Next Steps
 
-Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
+As the worlds got more complex I could see that the filters were very specific to a world. If the world changed the filers would all have to be retuned. That works OK for an industrial situation where the robot does just one job in one place and needs to be retrained for a different job. Somehow though if recognition were improves so that so many specific filters are note required in the pipeline, I think that robot could be more adaptable.
+
+I noticed that the inverse kinematics are very rough. It was hard to complete hte challenge of putting all the parts even for test1 world in bins because the arm movements were so erratic. Some work could be done to improve the inverse kinematics.
+
 
 
 
