@@ -193,7 +193,7 @@ Note that the passthrough filter was called twice, once in the 'y' plane to remo
 
 #### Step 3  
 
-I this step I extracted color and normals hisotgram features and trained using an SVM linear classifier.
+I this step I extracted color and normals histogram features and trained using an SVM linear classifier.
 
 I implemented the `compute_color_histograms()` and `compute_normal_histograms()` functions within features.py in /sensor_stick/src/sensor_stick to generate correct histogram results:
 ```
