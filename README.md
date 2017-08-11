@@ -283,6 +283,24 @@ I ran the train_svm.py model to train an SVM classifier on the labeled set of fe
 
 `rosrun sensor_stick train_svm.py`
 
+### Other Changes
+
+#### Changes to pick_place_project.launch
+
+Made changes as suggested on Slack to locate the scene number in a signle location:
+```
+	<!--TODO:Change the test number based on the scene you want loaded-->
+	<arg name="test_scene_num" value="1"/>
+	
+	   <!--TODO:Change the world name to load different tabletop setup-->
+	   <arg name="world_name" value="$(find pr2_robot)/worlds/test$(arg test_scene_num).world"/>
+
+	<!--TODO:Change the list name based on the scene you have loaded-->
+	  <param name="test_scene_num" type="int" value="$(arg test_scene_num)"/>
+	  <rosparam command="load" file="$(find pr2_robot)/config/pick_list_$(arg test_scene_num).yaml"/>
+
+```
+
 #### Modifications to `main`
 
 I added argument parsing to main to selectivley excercise various parts of the pipeline:
