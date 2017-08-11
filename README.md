@@ -262,6 +262,27 @@ I added argument parsing to main to selectivley excercise various parts of the p
 | ![Test 3](output/test3aobjects.png) |
 | ***Test 3 - 8 of 8 objects found and labeled *** |
 
+#### Sample Command Line Trace
+
+```
+Cdoug@doug-Ubuntu:~/catkin_ws$ rosrun pr2_robot project_template.py
+[INFO] [1502470839.219530, 977.927000]: Detected 1 objects: ['glue']
+[INFO] [1502470839.566929, 977.989000]: Detected 2 objects: ['glue', 'biscuits']
+[INFO] [1502470839.863138, 978.029000]: Detected 3 objects: ['glue', 'biscuits', 'soap']
+Request to pick up biscuits in group green
+Found biscuits at: 0.542056 -0.242489 0.705370
+Scene 1, picking up object biscuits that I found, with my right arm, and placing it in the green bin.
+Response to pick_place_routine service request:  True
+Scene 1: 1 of 1 objects moved to bin.
+Request to pick up soap in group green
+Found soap at: 0.541555 -0.020234 0.673019
+Scene 1, picking up object soap that I found, with my right arm, and placing it in the green bin.
+Response to pick_place_routine service request:  True
+Scene 1: 2 of 22 objects moved to bin.
+Request to pick up soap2 in group red
+Scene 1: 2 of 3 objects moved to bin.
+```
+
 #### Test 1 YAML
 
 ```
