@@ -12,7 +12,7 @@
 5. Performs object recognition on these objects and assign them labels as markers in RViz.
 6. Calculates the centroid (average in x, y and z) of the set of points belonging to that each object.
 7. Creates ROS messages containing the details of each object (name, pick_pose, etc.) and writes these messages out to `.yaml` files, one for each of the 3 scenarios (`test1-3.world` in `/pr2_robot/worlds/`).
-8. I created a project in my GitHub repo for the project including the Python code for your perception pipeline and the output `.yaml` files (3 `.yaml` files, one for each test world).  I have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, over 80% of items from `pick_list_2.yaml` for `test2.world` and over 75% of items from `pick_list_3.yaml` in `test3.world`.
+8. I created a project in my GitHub repo for the project including the Python code for your perception pipeline and the output `.yaml` files (3 `.yaml` files, one for each test world).  I have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, over 80% of items from `pick_list_2.yaml` for `test2.world` and over 75% of items from `pick_list_3.yaml` in `test3.world`. The YAML output files are shown later in the results section.
 
 ## Extra Challenges: The Pick & Place
 
@@ -20,7 +20,7 @@
 10. Rotate the robot to generate collision map of table sides. This can be accomplished by publishing joint angle value(in radians) to `/pr2/world_joint_controller/command`.
 11. Rotate the robot back to its original state.
 12. Create a ROS Client for the “pick_place_routine” rosservice.  In the required steps above, you already created the messages you need to use this service. Checkout the [PickPlace.srv](https://github.com/udacity/RoboND-Perception-Project/tree/master/pr2_robot/srv) file to find out what arguments you must pass to this service.
-13. If everything was done correctly, when you pass the appropriate messages to the `pick_place_routine` service, the selected arm will perform pick and place operation and display trajectory in the RViz window
+13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
 14. Place all the objects from your pick list in their respective dropoff box and you have completed the challenge!
 15. Looking for a bigger challenge?  Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
 
@@ -37,6 +37,8 @@ Pipeline including clustering for segmentation implemented.
 #### 3. Exercise 3  
 
 Features extracted and SVM trained.  Object recognition implemented.
+
+### Results
 
 <center>
 
@@ -439,6 +441,8 @@ object_list:
       z: 0.605
   test_scene_num: 3
   ```
+
+### Next Steps
 
 Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
 
