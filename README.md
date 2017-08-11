@@ -29,14 +29,65 @@
 #### 1. Exercise 1. 
 
 Pipeline for filtering and RANSAC plane fitting implemented.
+The steps are the following:
+
+1. Downsample your point cloud by applying a Voxel Grid Filter.
+2. Apply a Pass Through Filter to isolate the table and objects.
+3. Perform RANSAC plane fitting to identify the table.
+4. Use the ExtractIndices Filter to create new point clouds containing the table and objects separately.
+
 
 #### 2. Exercise 2: 
 
-Pipeline including clustering for segmentation implemented.  
+I added clustering for segmentation to the pipeline. 
+
+Create a python ros node that subscribes to /sensor_stick/point_cloud topic. Use the template.py file found under /sensor_stick/scripts/ to get started.
+
+Use your code from Exercise-1 to apply various filters and segment the table using RANSAC.
+
+Create publishers and topics to publish the segmented table and tabletop objects as separate point clouds
+
+Apply Euclidean clustering on the table-top objects (after table segmentation is successful)
+
+Create a XYZRGB point cloud such that each cluster obtained from the previous step has its own unique color.
+
+Finally publish your colored cluster cloud on a separate topic 
 
 #### 3. Exercise 3  
 
 Features extracted and SVM trained.  Object recognition implemented.
+#### Preparing for training
+
+Launch the training.launch file to bring up the Gazebo environment:
+
+`$ roslaunch sensor_stick training.launch`
+
+You should see an empty scene in Gazebo with only the sensor stick robot.
+
+#### Capturing Features
+
+Next, in a new terminal, run the capture_features.py script to capture and save features for each of the objects in the environment. This script spawns each object in random orientations (default 5 orientations per object) and computes features based on the point clouds resulting from each of the random orientations.
+
+`$ rosrun sensor_stick capture_features.py`
+
+The features will now be captured and you can watch the objects being spawned in Gazebo. It should take 5-10 sec. for each random orientations (depending on your machine's resources) so with 7 objects total it takes awhile to complete. When it finishes running you should have a training_set.sav file.
+
+#### Training
+
+After that, you're ready to run the train_svm.py model to train an SVM classifier on your labeled set of features.
+
+`rosrun sensor_stick train_svm.py`
+
+Note: Running this exercise out of the box your classifier will have poor performance because the functions compute_color_histograms() and compute_normal_histograms() (within features.py in /sensor_stick/src/sensor_stick) are generating random junk. Fix them in order to generate meaningful features and train your classifier!
+
+#### Classifying Segmented Objects
+
+If everything went well you now have a trained classifier and you're ready to do object recognition! First you have to build out your node for segmenting your point cloud. This is where you'll bring in your code from Exercises 1 and 2.
+
+Make yourself a copy of the template.py file in the sensor_stick/scripts/ directory and call it something like object_recognition.py. Inside this file, you'll find all the TODO's from Exercises 1 and 2 and you can simply copy and paste your code in there from the previous exercises.
+
+The new code you need to add is listed under the Exercise-3 TODO's in the pcl_callback() function. You'll also need to add some new publishers for outputting your detected object clouds and label markers. For the step-by-step instructions on what to add in these Exercise-3 TODOs, see the lesson in the classroom.
+
 
 ### Results
 
