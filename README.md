@@ -179,8 +179,6 @@ Note that the passthrough filter was called twice, once in the 'y' plane to remo
 - I created a python ros node that subscribes to /sensor_stick/point_cloud topic.
 - I create publishers and topics to publish the segmented table and tabletop objects as separate point clouds
 - I applied Euclidean clustering on the table-top objects (after table segmentation is successful)
-- I create a XYZRGB point cloud such that each cluster obtained from the previous step has its own unique color.
-- I published the colored cluster cloud on a separate topic `pcl_cluster`.
 ```
 	# Euclidean Clustering
 
@@ -228,6 +226,34 @@ Note that the passthrough filter was called twice, once in the 'y' plane to remo
 	pcl_table_pub.publish(ros_cloud_table)
 	pcl_cluster_pub.publish(ros_cluster_cloud)
 ```
+- I created a XYZRGB point cloud such that each cluster obtained from the previous step has its own unique color.
+- I published the colored cluster cloud on a separate topic `pcl_cluster`.
+```
+# Create Subscribers
+
+	pcl_sub = rospy.Subscriber("/pr2/world/points", PointCloud2, pcl_callback, queue_size=1)
+
+	# Create Publishers
+
+	pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
+	pcl_table_pub = rospy.Publisher("/pcl_table", PointCloud2, queue_size=1)
+	pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
+	pcl_collision_pub = rospy.Publisher("/pr2/3d_map/points", PointCloud2, queue_size=1)
+	
+	pub_body = rospy.Publisher('/pr2/world_joint_controller/command', Float64, queue_size=1)
+
+	# Create object_markers_pub and detected_objects_pub
+	# Publish to "/object_markers" and "/detected_objects", respectively
+	object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
+	detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
+
+	# Load Model From disk
+	model = pickle.load(open('model.sav', 'rb'))
+	clf = model['classifier']
+	encoder = LabelEncoder()
+	encoder.classes_ = model['classes']
+	scaler = model['scaler']
+```
 
 #### Step 3  
 
@@ -235,7 +261,7 @@ I this step I extracted color and normals hisotgram features and trained using a
 
 #### Training
 
-Launch the training.launch file to bring up the Gazebo environment:
+I launched the training.launch file to bring up the Gazebo environment:
 
 `roslaunch sensor_stick training.launch`
 
@@ -245,7 +271,7 @@ I ran the capture_features.py script to capture and save features for each of th
 
 `rosrun sensor_stick capture_features.py`
 
-The features were captured as the objects were being spawned in various orientations in Gazebo. It took about 5 sec. for each random orientation. When it finishes the results were stored in a training_set.sav file.
+The features were captured as the objects were being spawned in various orientations in Gazebo. It took about 5 sec. for each random orientation. When it finished the results were stored in a training_set.sav file.
 
 #### Training
 
@@ -253,16 +279,32 @@ I ran the train_svm.py model to train an SVM classifier on the labeled set of fe
 
 `rosrun sensor_stick train_svm.py`
 
-I impltemented the `compute_color_histograms()` and `compute_normal_histograms()` (within features.py in /sensor_stick/src/sensor_stick) to generate correct histogram results. 
+I implemented the `compute_color_histograms()` and `compute_normal_histograms()` functions within features.py in /sensor_stick/src/sensor_stick to generate correct histogram results. 
 
-#### Classifying Segmented Objects
+### Modifications `main`
 
-If everything went well you now have a trained classifier and you're ready to do object recognition! First you have to build out your node for segmenting your point cloud. This is where you'll bring in your code from Exercises 1 and 2.
+I added argument parsing to main to selectivley excercise various parts of the pipeline:
+```
+	pipeline_only = False		# for testing, just do the recoginition pipeline and skip PR2 movement
+	with_collision_map = False	# also calculate the collision map
+	yaml_only = False		# true if only yaml output is desired, and no robot motion
 
-Make yourself a copy of the template.py file in the sensor_stick/scripts/ directory and call it something like object_recognition.py. Inside this file, you'll find all the TODO's from Exercises 1 and 2 and you can simply copy and paste your code in there from the previous exercises.
+	# Parse arguments
 
-The new code you need to add is listed under the Exercise-3 TODO's in the pcl_callback() function. You'll also need to add some new publishers for outputting your detected object clouds and label markers. For the step-by-step instructions on what to add in these Exercise-3 TODOs, see the lesson in the classroom.
-
+	if len(sys.argv) >= 2:
+		if sys.argv[1] == "pipeline_only":
+			pipeline_only = True
+			print "Running pipeline only"
+		if sys.argv[1] == "with_collision_map":
+			with_collision_map = True
+			print "With Collision map"
+		if sys.argv[1] == "yaml_only":
+			yaml_only = True
+			print "YAML only"
+		if sys.argv[1] == "help":
+			print "%s: [ pipeline_only | with_collision_map ]" % sys.argv[0]
+			exit()
+```
 
 ### Results
 
