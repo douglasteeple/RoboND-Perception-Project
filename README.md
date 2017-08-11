@@ -812,7 +812,7 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge.
+14. I only placed 2 of the objects from the pick list in their respective dropoff box and could not complete the challenge.
 ![Test1 Results](output/test1results.jpg)
 
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
