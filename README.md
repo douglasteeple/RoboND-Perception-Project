@@ -5,7 +5,7 @@
 
 ## The Steps Demonstrated in project_template.py:
 
-1. Extracts features and train an SVM model on new objects in `pick_list_*.yaml` in `/pr2_robot/config/`. 
+1. Extracted features and train an SVM model on new objects in `pick_list_*.yaml` in `/pr2_robot/config/`.  I left the sensor_stick project in the src directory, changed the list of models and extracted HSV color and surface normals histogram features, and saved to models.sav. I then reran the svm classifier to create the training set. I only got 76% in the cnofusion matrix, but still that proved to be adequate for later steps.
 2. Creates a ROS node and subscribes to the `/pr2/world/points` topic. This topic contains noisy point cloud data that is filtered with a statistical output filter.
 3. Uses filtering and RANSAC plane fitting to isolate the objects of interest from the rest of the scene.
 4. Applies Euclidean clustering to create separate clusters for individual items.
