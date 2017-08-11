@@ -76,7 +76,12 @@ Note that this code is conditionally called as it is very slow to execute.
 				print "Service call failed: %s" % e
 ```
 14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge.
-15. I load up the `challenge.world` scenario to get the perception pipeline working there.
+![Test1 Results](output/test1results.jpg)
+
+15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
+![Challenge World](output/challenge.jpg)
+
+But, it required more changes and tuning than I could accomplish in time...
 
 ### Recognition Pipeline
 
