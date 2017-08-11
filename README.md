@@ -80,14 +80,15 @@ Note that this code is conditionally called as it is very slow to execute.
 
 ### Recognition Pipeline
 
-#### 1. Exercise 1. 
+#### Step 1.
 
 Pipeline for filtering and RANSAC plane fitting implemented.
+
 The steps are the following:
 
-1. Downsample your point cloud by applying a Voxel Grid Filter.
+1. Downsample the point cloud by applying a Voxel Grid Filter.
 2. Add a statistical outlier filter to remove noise from the data.
-3. Apply a Pass Through Filter to isolate the table and objects.
+3. Apply a Passthrough Filter to isolate the table and objects.
 4. Perform RANSAC plane fitting to identify the table.
 5. Use the ExtractIndices Filter to create new point clouds containing the table and objects separately.
 ```
@@ -169,7 +170,18 @@ The steps are the following:
 	# Extract outliers
 
 	cloud_objects = cloud_filtered.extract(inliers, negative=True)
+```
+Note that the passthrough filter was called twice, once in the 'y' plane to remove the red and green bins and in the 'z' plane to remove the table top and support.
 
+#### Step 2: 
+
+- I added clustering for segmentation to the pipeline. 
+- I created a python ros node that subscribes to /sensor_stick/point_cloud topic.
+- I create publishers and topics to publish the segmented table and tabletop objects as separate point clouds
+- I applied Euclidean clustering on the table-top objects (after table segmentation is successful)
+- I create a XYZRGB point cloud such that each cluster obtained from the previous step has its own unique color.
+- I published the colored cluster cloud on a separate topic `pcl_cluster`.
+```
 	# Euclidean Clustering
 
 	white_cloud = XYZRGB_to_XYZ(cloud_objects)
@@ -216,34 +228,16 @@ The steps are the following:
 	pcl_table_pub.publish(ros_cloud_table)
 	pcl_cluster_pub.publish(ros_cluster_cloud)
 ```
-Note that the passtrhough filter was called twice, once in the 'y' plane to remove the red and green bins and in the 'z' plane to remove the table top and support.
 
-#### 2. Exercise 2: 
+#### Step 3  
 
-I added clustering for segmentation to the pipeline. 
+I this step I extracted color and normals hisotgram features and trained using an SVM linear classifier.
 
-Create a python ros node that subscribes to /sensor_stick/point_cloud topic. Use the template.py file found under /sensor_stick/scripts/ to get started.
-
-Use your code from Exercise-1 to apply various filters and segment the table using RANSAC.
-
-Create publishers and topics to publish the segmented table and tabletop objects as separate point clouds
-
-Apply Euclidean clustering on the table-top objects (after table segmentation is successful)
-
-Create a XYZRGB point cloud such that each cluster obtained from the previous step has its own unique color.
-
-Finally publish your colored cluster cloud on a separate topic 
-
-#### 3. Exercise 3  
-
-Features extracted and SVM trained.  Object recognition implemented.
-#### Preparing for training
+#### Training
 
 Launch the training.launch file to bring up the Gazebo environment:
 
 `roslaunch sensor_stick training.launch`
-
-You should see an empty scene in Gazebo with only the sensor stick robot.
 
 #### Capturing Features
 
@@ -251,15 +245,15 @@ I ran the capture_features.py script to capture and save features for each of th
 
 `rosrun sensor_stick capture_features.py`
 
-The features will now be captured and you can watch the objects being spawned in Gazebo. It should take 5-10 sec. for each random orientations (depending on your machine's resources) so with 7 objects total it takes awhile to complete. When it finishes running you should have a training_set.sav file.
+The features were captured as the objects were being spawned in various orientations in Gazebo. It took about 5 sec. for each random orientation. When it finishes the results were stored in a training_set.sav file.
 
 #### Training
 
-After that, you're ready to run the train_svm.py model to train an SVM classifier on your labeled set of features.
+I ran the train_svm.py model to train an SVM classifier on the labeled set of features.
 
 `rosrun sensor_stick train_svm.py`
 
-Note: Running this exercise out of the box your classifier will have poor performance because the functions compute_color_histograms() and compute_normal_histograms() (within features.py in /sensor_stick/src/sensor_stick) are generating random junk. Fix them in order to generate meaningful features and train your classifier!
+I impltemented the `compute_color_histograms()` and `compute_normal_histograms()` (within features.py in /sensor_stick/src/sensor_stick) to generate correct histogram results. 
 
 #### Classifying Segmented Objects
 
