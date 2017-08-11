@@ -75,8 +75,8 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge!
-15. Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
+14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge.
+15. I load up the `challenge.world` scenario to get the perception pipeline working there.
 
 ### Recognition Pipeline
 
@@ -86,10 +86,137 @@ Pipeline for filtering and RANSAC plane fitting implemented.
 The steps are the following:
 
 1. Downsample your point cloud by applying a Voxel Grid Filter.
-2. Apply a Pass Through Filter to isolate the table and objects.
-3. Perform RANSAC plane fitting to identify the table.
-4. Use the ExtractIndices Filter to create new point clouds containing the table and objects separately.
+2. Add a statistical outlier filter to remove noise from the data.
+3. Apply a Pass Through Filter to isolate the table and objects.
+4. Perform RANSAC plane fitting to identify the table.
+5. Use the ExtractIndices Filter to create new point clouds containing the table and objects separately.
+```
 
+	# Convert ROS msg to PCL data
+
+	cloud = ros_to_pcl(pcl_msg)
+
+	# Create a VoxelGrid filter object for our input point cloud
+	vox = cloud.make_voxel_grid_filter()
+
+	# Choose a voxel (also known as leaf) size
+	LEAF_SIZE = 0.01
+
+	# Set the voxel (or leaf) size
+	vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
+
+	# Call the filter function to obtain the resultant downsampled point cloud
+	cloud_filtered = vox.filter()
+	
+	# Much like the previous filters, we start by creating a filter object: 
+	outlier_filter = cloud_filtered.make_statistical_outlier_filter()
+
+	# Set the number of neighboring points to analyze for any given point
+	outlier_filter.set_mean_k(50)
+
+	# Set threshold scale factor
+	x = 0.05
+
+	# Any point with a mean distance larger than global (mean distance+x*std_dev) will be considered outlier
+	outlier_filter.set_std_dev_mul_thresh(x)
+
+	# Finally call the filter function for magic
+	cloud_filtered = outlier_filter.filter()
+	
+	# Create a PassThrough filter object.
+	passthrough = cloud_filtered.make_passthrough_filter()
+
+	# Assign axis and range to the passthrough filter object.
+	# first filter in y axis to remove bins
+	passthrough.set_filter_field_name('y')
+	axis_min = -0.4
+	axis_max = 0.4
+	passthrough.set_filter_limits(axis_min, axis_max)
+	x_indices = passthrough.filter()
+	cloud_filtered = passthrough.filter()
+
+	# now filter in z axis to remove table and stand
+	passthrough = cloud_filtered.make_passthrough_filter()
+	passthrough.set_filter_field_name('z')
+	axis_min = 0.6
+	axis_max = 2.0
+	passthrough.set_filter_limits (axis_min, axis_max)
+
+	# Finally use the filter function to obtain the resultant point cloud. 
+	cloud_filtered = passthrough.filter()
+	
+	# RANSAC plane segmentation
+	# Create the segmentation object
+	seg = cloud_filtered.make_segmenter()
+
+	# Set the model you wish to fit 
+	seg.set_model_type(pcl.SACMODEL_PLANE)
+	seg.set_method_type(pcl.SAC_RANSAC)
+
+	# Max distance for a point to be considered fitting the model
+	# Experiment with different values for max_distance 
+	# for segmenting the table
+	max_distance = 0.01
+	seg.set_distance_threshold(max_distance)
+
+	# Call the segment function to obtain set of inlier indices and model coefficients
+	inliers, coefficients = seg.segment()
+
+	# Extract inliers
+
+	cloud_table = cloud_filtered.extract(inliers, negative=False)
+
+	# Extract outliers
+
+	cloud_objects = cloud_filtered.extract(inliers, negative=True)
+
+	# Euclidean Clustering
+
+	white_cloud = XYZRGB_to_XYZ(cloud_objects)
+	tree = white_cloud.make_kdtree()
+
+	# Create Cluster-Mask Point Cloud to visualize each cluster separately
+	# Create a cluster extraction object
+	ec = white_cloud.make_EuclideanClusterExtraction()
+	# Set tolerances for distance threshold 
+	# as well as minimum and maximum cluster size (in points)
+	ec.set_ClusterTolerance(0.025)
+	ec.set_MinClusterSize(10)
+	ec.set_MaxClusterSize(2000)
+	# Search the k-d tree for clusters
+	ec.set_SearchMethod(tree)
+	# Extract indices for each of the discovered clusters
+	cluster_indices = ec.Extract()
+
+	#Assign a color corresponding to each segmented object in scene
+	cluster_color = get_color_list(len(cluster_indices))
+
+	color_cluster_point_list = []
+
+	for j, indices in enumerate(cluster_indices):
+	    for i, index in enumerate(indices):
+		color_cluster_point_list.append([white_cloud[index][0],
+		                                white_cloud[index][1],
+		                                white_cloud[index][2],
+		                                 rgb_to_float(cluster_color[j])])
+
+	#Create new cloud containing all clusters, each with unique color
+	cluster_cloud = pcl.PointCloud_PointXYZRGB()
+	cluster_cloud.from_list(color_cluster_point_list)
+
+	# Convert PCL data to ROS messages
+
+	ros_cloud_table = pcl_to_ros(cloud_table)
+	ros_cloud_objects = pcl_to_ros(cloud_objects)
+	ros_cluster_cloud = pcl_to_ros(cluster_cloud)
+
+	# Publish ROS messages
+
+	pcl_objects_pub.publish(ros_cloud_objects)
+	pcl_table_pub.publish(ros_cloud_table)
+	pcl_cluster_pub.publish(ros_cluster_cloud)
+```
+Note that the passtrhough filter was called twice, once in the 'y' plane to remove the red and green bins and in the 'z' plane to remove the table top and support.
 
 #### 2. Exercise 2: 
 
@@ -114,13 +241,13 @@ Features extracted and SVM trained.  Object recognition implemented.
 
 Launch the training.launch file to bring up the Gazebo environment:
 
-`$ roslaunch sensor_stick training.launch`
+`roslaunch sensor_stick training.launch`
 
 You should see an empty scene in Gazebo with only the sensor stick robot.
 
 #### Capturing Features
 
-Next, in a new terminal, run the capture_features.py script to capture and save features for each of the objects in the environment. This script spawns each object in random orientations (default 5 orientations per object) and computes features based on the point clouds resulting from each of the random orientations.
+I ran the capture_features.py script to capture and save features for each of the objects in the environment. This script spawns each object in random orientations (I used 10 orientations per object) and computed features based on the point clouds resulting from each of the random orientations.
 
 `rosrun sensor_stick capture_features.py`
 
