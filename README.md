@@ -45,15 +45,38 @@ I then called `turn_pr2` in the project_template.py `pr_mover()` function:
 	if with_collision_map == True:
 		print "Sending command to scan for obstacles..."
 		dtime1 = turn_pr2(np.pi/2.0)	# right
-    dtime2 = turn_pr2(-np.pi/2.0)	# left
-    dtime3 = turn_pr2(0.0)		# back home
+    		dtime2 = turn_pr2(-np.pi/2.0)	# left
+    		dtime3 = turn_pr2(0.0)		# back home
 ```
 Note that this code is conditionally called as it is very slow to execute.
-11. Rotate the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
-12. Create a ROS Client for the “pick_place_routine” rosservice.  In the required steps above, you already created the messages you need to use this service. Checkout the [PickPlace.srv](https://github.com/udacity/RoboND-Perception-Project/tree/master/pr2_robot/srv) file to find out what arguments you must pass to this service.
+
+11. I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
+12. I created a ROS Client for the “pick_place_routine” rosservice:
+```
+	
+		if yaml_only == False:
+	
+        		# Wait for 'pick_place_routine' service to come up
+        		rospy.wait_for_service('pick_place_routine')
+
+			try:
+				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
+
+```
 13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
-14. Place all the objects from your pick list in their respective dropoff box and you have completed the challenge!
-15. Looking for a bigger challenge?  Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
+```
+				# Insert message variables to be sent as a service request
+				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
+
+				print "Response to pick_place_routine service request: ", resp.success
+				if resp.success == True:
+					success_count += 1
+
+        		except rospy.ServiceException, e:
+				print "Service call failed: %s" % e
+```
+14. I placed all the objects from the pick list in their respective dropoff box to complete the challenge!
+15. Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
 
 ### Recognition Pipeline
 
