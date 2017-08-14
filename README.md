@@ -394,12 +394,15 @@ def ros_to_pcl2(ros_cloud1, ros_cloud2):
 #### Sample Command Line Trace
 
 ```
-Cdoug@doug-Ubuntu:~/catkin_ws$ rosrun pr2_robot project_template.py
-[INFO] [1502470839.219530, 977.927000]: Detected 1 objects: ['glue']
-[INFO] [1502470839.566929, 977.989000]: Detected 2 objects: ['glue', 'biscuits']
-[INFO] [1502470839.863138, 978.029000]: Detected 3 objects: ['glue', 'biscuits', 'soap']
+doug@doug-Ubuntu:~/catkin_ws$ rosrun pr2_robot project_template.py with_object_collision_map
+With Object Collision map
+[INFO] [1502750226.971035, 986.352000]: Detected 1 objects: ['biscuits']
+[INFO] [1502750227.201833, 986.395000]: Detected 2 objects: ['biscuits', 'soap']
+[INFO] [1502750227.349699, 986.414000]: Detected 3 objects: ['biscuits', 'soap', 'soap2']
 Request to pick up biscuits in group green
-Found biscuits at: 0.542056 -0.242489 0.705370
+Publishing soap as a collision object of biscuits
+Publishing soap2 as a collision object of biscuits
+Found biscuits at: 0.542226 -0.243688 0.705338
 Scene 1, picking up object biscuits that I found, with my right arm, and placing it in the green bin.
 Response to pick_place_routine service request:  True
 Scene 1: 1 of 1 objects moved to bin.
