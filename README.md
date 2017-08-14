@@ -277,6 +277,10 @@ The features were captured as the objects were being spawned in various orientat
        'soap2']
 ```
 
+Here is an example of the sensor stick during training:
+
+![Sensor Stick Snacks](output/sensor_stic_snacks.jpg)
+
 #### Training
 
 I ran the train_svm.py model to train an SVM classifier on the labeled set of features.
@@ -938,7 +942,7 @@ Note that this code is conditionally called as it is very slow to execute.
 
 Completing this task required adding the objects that the PR2 was not currently picking to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion.
 
-![Object Collision Map](output/colmap.png)
+![Object Collision Map](output/objectcollisionmap.png)
 
 Collision map with objects not being picked up added to map.
 ```
