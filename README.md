@@ -815,9 +815,16 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-14. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. Completing this task required adding the objects that the PR2 was not currently picking to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion.
+14. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. 
 
 ![Test1 Results](output/test1results.jpg)
+
+Completing this task required adding the objects that the PR2 was not currently picking to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion.
+
+![Object Collision Map](output/colmap.png)
+
+Collision map with objects not being picked up added to map.
+
 
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
