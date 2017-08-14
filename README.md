@@ -852,7 +852,63 @@ I then called `turn_pr2` in the project_template.py `pr_mover()` function:
 Note that this code is conditionally called as it is very slow to execute.
 
 11. I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
-12. I created a ROS Client for the “pick_place_routine” rosservice:
+12. The main body of `pr2_mover` located the objects from the request list in the detected objects list, calculated the centroids of the objects and finally called the pick_place_routine to move the PR2, and saved the output in a YAML file.
+```
+    for i in range(len(object_list_param)):
+	request_count += 1
+    	# Parse parameters into individual variables
+	object_name.data = object_list_param[i]['name']
+	object_group.data = object_list_param[i]['group']
+	print "Request to pick up %s in group %s" % (object_name.data, object_group.data)
+	
+	# First publish all object not in the request list as collision objects
+	if with_object_collision_map == True:
+		ros_composite_map = pcl_to_ros(collision_map)
+	    	for the_object in detected_objects_list:
+		    if the_object.label != object_name.data:
+			pcl_composite_map = ros_to_pcl2(ros_composite_map, the_object.cloud)	# append the new object to the collision map
+			ros_composite_map = pcl_to_ros(pcl_composite_map)
+			print "Publishing %s as a collision object of %s" % (the_object.label, object_name.data)
+
+		pcl_collision_pub.publish(ros_composite_map)
+
+   	# Loop through the pick list and look for the requested object
+    	for the_object in detected_objects_list:
+	    match_count = 0
+	    if the_object.label == object_name.data:
+		match_count += 1
+
+		# Get the PointCloud for a given object and obtain it's centroid
+		labels.append(the_object.label)
+		points_arr = ros_to_pcl(the_object.cloud).to_array()
+		centroid = np.mean(points_arr, axis=0)[:3]
+		centroid = [np.asscalar(centroid[0]),np.asscalar(centroid[1]),np.asscalar(centroid[2])]
+		centroids.append(centroid)
+		print "Found %s at: %f %f %f" % (object_name.data, centroid[0], centroid[1], centroid[2])
+
+        	# Assign the arm to be used for pick_place
+		if object_group.data == 'green':
+		    arm_name.data = 'right'
+		    place_pose.position.x = -0.1-float(success_count)*0.2	# move back a little bit for each object
+		    place_pose.position.y = -0.71				# so as not to stack...
+		    place_pose.position.z = 0.605
+		else:
+		    arm_name.data = 'left'
+		    place_pose.position.x = -0.1-float(success_count)*0.2
+		    place_pose.position.y = 0.71
+		    place_pose.position.z = 0.605
+
+		pick_pose.position.x = centroid[0]
+		pick_pose.position.y = centroid[1]
+		pick_pose.position.z = centroid[2]
+
+		print "Scene %d, picking up object %s that I found, with my %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
+
+        	# Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
+		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
+		dict_list.append(yaml_dict)
+```
+13. I created a ROS Client for the “pick_place_routine” rosservice:
 ```
 	
 		if yaml_only == False:
@@ -864,7 +920,7 @@ Note that this code is conditionally called as it is very slow to execute.
 				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
 ```
-13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
+14. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
 ```
 				# Insert message variables to be sent as a service request
 				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
@@ -876,7 +932,7 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-14. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. 
+15. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. 
 
 ![Test1 Results](output/test1results.jpg)
 
@@ -900,7 +956,7 @@ Collision map with objects not being picked up added to map.
 
 I also wrote `ros_to_pcl2` a function that concatenates to ros messages and creates a compsite pcl map.
 
-15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
+16. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
 
 To make the models and worlds more consistent I copied challenge.world to test4.world and test3.yaml to test4.yaml. In this way I could just set the scene number to 4 to run the challenge. I added a command line parameter `with_collision_map` to enable scanning for objects to the left and right of center.
