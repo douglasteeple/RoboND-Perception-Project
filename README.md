@@ -407,12 +407,18 @@ Scene 1, picking up object biscuits that I found, with my right arm, and placing
 Response to pick_place_routine service request:  True
 Scene 1: 1 of 1 objects moved to bin.
 Request to pick up soap in group green
-Found soap at: 0.541555 -0.020234 0.673019
+Publishing biscuits as a collision object of soap
+Publishing soap2 as a collision object of soap
+Found soap at: 0.540899 -0.019530 0.672708
 Scene 1, picking up object soap that I found, with my right arm, and placing it in the green bin.
 Response to pick_place_routine service request:  True
-Scene 1: 2 of 22 objects moved to bin.
+Scene 1: 2 of 2 objects moved to bin.
 Request to pick up soap2 in group red
-Scene 1: 2 of 3 objects moved to bin.
+Publishing biscuits as a collision object of soap2
+Publishing soap as a collision object of soap2
+Found soap2 at: 0.444292 0.227145 0.674390
+Scene 1, picking up object soap2 that I found, with my left arm, and placing it in the red bin.
+
 ```
 
 #### Test 1 YAML
