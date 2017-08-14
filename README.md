@@ -252,7 +252,7 @@ def compute_normal_histograms(normal_cloud, nbins=32):
     return normed_features
 ```
 
-#### Training
+#### Training Environment
 
 I launched the training.launch file to bring up the Gazebo environment:
 
@@ -763,18 +763,21 @@ def at_goal(pos, goal):
     result = abs(pos - goal) <= abs(tolerance)
     return result
 
-def turn_pr2(pos):
+def turn_pr2(pos, wait=True):
     time_elapsed = rospy.Time.now()
-    pub_body.publish(pos)
+    pub_body.publish(pos)		# move the PR2
+    joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)	# get current position
+    loc = joint_state.position[19]
 
-    while True:
+    while wait:
         joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
-	      #print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
-        if at_goal(joint_state.position[19], pos):
+        loc = joint_state.position[19]
+	#print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
+        if at_goal(loc, pos):
             time_elapsed = joint_state.header.stamp - time_elapsed
             break
 
-    return time_elapsed
+    return loc
 ```
 I then called `turn_pr2` in the project_template.py `pr_mover()` function:
 ```
@@ -812,19 +815,22 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-14. I only placed 2 of the objects from the pick list in their respective dropoff box and could not complete the challenge.
+14. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. Completing this task required adding the objects that the PR2 was not currently picking to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion.
+
 ![Test1 Results](output/test1results.jpg)
 
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
 
-But, it required more changes and tuning than I could accomplish in time...
+To make the models and worlds more consistent I copied challenge.world to test4.world and test3.yaml to test4.yaml. In this way I could just set the scene number to 4 to run the challenge. I added a command line parameter `with_collision_map` to enable scanning for objects to the left and right of center.
+
+But, it required more changes and tuning than I could accomplish in time to meet the project deadline...
 
 ### Next Steps
 
 As the worlds got more complex I could see that the filters were very specific to a world. If the world changed the filers would all have to be retuned. That works OK for an industrial situation where the robot does just one job in one place and needs to be retrained for a different job. Somehow though if recognition were improves so that so many specific filters are note required in the pipeline, I think that robot could be more adaptable.
 
-I noticed that the inverse kinematics are very rough. It was hard to complete hte challenge of putting all the parts even for test1 world in bins because the arm movements were so erratic. Some work could be done to improve the inverse kinematics.
+I noticed that the inverse kinematics are very rough. It was hard to complete the challenge of putting all the parts even for test1 world in bins because the arm movements were so erratic. Some work could be done to improve the inverse kinematics.
 
 
 
