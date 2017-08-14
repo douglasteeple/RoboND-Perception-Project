@@ -305,25 +305,66 @@ Made changes as suggested on Slack to locate the scene number in a signle locati
 
 I added argument parsing to main to selectivley excercise various parts of the pipeline:
 ```
-	pipeline_only = False		# for testing, just do the recoginition pipeline and skip PR2 movement
-	with_collision_map = False	# also calculate the collision map
-	yaml_only = False		# true if only yaml output is desired, and no robot motion
+	test_scene_num = Int32()
+
+	pipeline_only = False			# for testing, just do the recoginition pipeline and skip PR2 movement
+	with_collision_map = False		# calculate the collision map for challenge.world
+	with_object_collision_map = False	# calculate the object collision map
+	yaml_only = False			# true if only yaml output is desired, and no robot motion
+
+	turn = 0.0				# current turn angle - 0.0 = front facing
+
+	left_done = False
+	right_done = False
+	center_done = False
 
 	# Parse arguments
-
+	arg = 1
 	if len(sys.argv) >= 2:
-		if sys.argv[1] == "pipeline_only":
+		if sys.argv[arg] == "pipeline_only":
 			pipeline_only = True
 			print "Running pipeline only"
-		if sys.argv[1] == "with_collision_map":
+		if sys.argv[arg] == "with_collision_map":
 			with_collision_map = True
 			print "With Collision map"
-		if sys.argv[1] == "yaml_only":
+		if sys.argv[arg] == "with_object_collision_map":
+			with_object_collision_map = True
+			print "With Object Collision map"
+		if sys.argv[arg] == "yaml_only":
 			yaml_only = True
 			print "YAML only"
-		if sys.argv[1] == "help":
-			print "%s: [ pipeline_only | with_collision_map ]" % sys.argv[0]
+		if sys.argv[arg] == "help":
+			print "%s: [ pipeline_only | with_collision_map | with_object_collision_map | yaml_only | help ]" % sys.argv[0]
 			exit()
+```
+
+#### Function `ros_to_pcl2`
+
+A helper function that concatenates two PointCloud2 ROS messages into a single PCL Point Cloud.
+
+```
+def ros_to_pcl2(ros_cloud1, ros_cloud2):
+    """ Appends two ROS PointCloud2 ROS messages to a single pcl PointXYZRGB
+    
+        Args:
+            ros_cloud (PointCloud2, PointCloud2): ROS PointCloud2 messages
+            
+        Returns:
+            pcl.PointCloud_PointXYZRGB: PCL XYZRGB point cloud
+    """
+    points_list = []
+
+    for data in pc2.read_points(ros_cloud1, skip_nans=True):
+        points_list.append([data[0], data[1], data[2], data[3]])
+
+    for data in pc2.read_points(ros_cloud2, skip_nans=True):
+        points_list.append([data[0], data[1], data[2], data[3]])
+
+    pcl_data = pcl.PointCloud_PointXYZRGB()
+    pcl_data.from_list(points_list)
+
+    return pcl_data
+
 ```
 
 ### Results
@@ -758,35 +799,55 @@ object_list:
 ```
 # PR2 movement support routines
 
+# ... close enough
 def at_goal(pos, goal):
     tolerance = .05
     result = abs(pos - goal) <= abs(tolerance)
     return result
 
+# the wait arguments determines whether or not this is a blocking call
 def turn_pr2(pos, wait=True):
     time_elapsed = rospy.Time.now()
-    pub_body.publish(pos)		# move the PR2
-    joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)	# get current position
-    loc = joint_state.position[19]
+    pub_body.publish(pos)
+    loc = 0.0
 
+    joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
+    loc = joint_state.position[19]	# the world link
+        
     while wait:
         joint_state = rospy.wait_for_message('/pr2/joint_states', JointState)
         loc = joint_state.position[19]
-	#print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
-        if at_goal(loc, pos):
-            time_elapsed = joint_state.header.stamp - time_elapsed
-            break
+ 	if at_goal(loc, pos):
+ 	   #print "turn_pr2: Request: %f Joint %s=%f" % (pos, joint_state.name[19], joint_state.position[19])
+           time_elapsed = joint_state.header.stamp - time_elapsed
+           break
 
     return loc
 ```
 I then called `turn_pr2` in the project_template.py `pr_mover()` function:
 ```
     	# Rotate PR2 in place to capture side tables for the collision map
-	if with_collision_map == True:
+	# Note that turn_pr2 is a non-blocking call so the request is made
+	# and then repeatedly checked in each callback against the goal
+	# when the goal is reached, the next scan is initiated, until
+	# return to center is achieved
+	if with_collision_map == True and center_done == False:
 		print "Sending command to scan for obstacles..."
-		dtime1 = turn_pr2(np.pi/2.0)	# right
-    		dtime2 = turn_pr2(-np.pi/2.0)	# left
-    		dtime3 = turn_pr2(0.0)		# back home
+		if right_done == False:
+			turn = turn_pr2(-np.pi/2.0,False)	# right
+			print "Turning right at %f radians now." % turn
+			if at_goal(turn, -np.pi/2.0):
+				right_done = True
+		elif left_done == False:
+        		turn = turn_pr2(np.pi/2.0,False)	# left
+ 			print "Turning left at %f radians now." % turn
+			if at_goal(turn, np.pi/2.0):
+				left_done = True
+	       	elif center_done == False:
+ 			turn = turn_pr2(0.0,False)		# back home
+			print "Centering at %f radians now." % turn
+			if at_goal(turn, 0.0):
+				center_done = True
 ```
 Note that this code is conditionally called as it is very slow to execute.
 
@@ -824,7 +885,20 @@ Completing this task required adding the objects that the PR2 was not currently 
 ![Object Collision Map](output/colmap.png)
 
 Collision map with objects not being picked up added to map.
+```
+	# First publish all object not in the request list as collision objects
+	if with_object_collision_map == True:
+		ros_composite_map = pcl_to_ros(collision_map)
+	    	for the_object in detected_objects_list:
+		    if the_object.label != object_name.data:
+			pcl_composite_map = ros_to_pcl2(ros_composite_map, the_object.cloud)	# append the new object to the collision map
+			ros_composite_map = pcl_to_ros(pcl_composite_map)
+			print "Publishing %s as a collision object of %s" % (the_object.label, object_name.data)
 
+		pcl_collision_pub.publish(ros_composite_map)
+```
+
+I also wrote `ros_to_pcl2` a function that concatenates to ros messages and creates a compsite pcl map.
 
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
