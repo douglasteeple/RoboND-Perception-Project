@@ -25,6 +25,7 @@ from pr2_robot.srv import *
 from rospy_message_converter import message_converter
 from sensor_msgs.msg import JointState
 import yaml
+import argparse
 
 from pcl_helper import ros_to_pcl2
 
@@ -54,6 +55,9 @@ def turn_pr2(pos, wait=True):
            break
 
     return loc
+
+def is_challenge():
+	return test_scene_num.data == 4
 
 # Helper function to get surface normals
 def get_normals(cloud):
@@ -121,7 +125,23 @@ def pcl_callback(pcl_msg):
 	cloud_filtered = outlier_filter.filter()
 	
 	# Create a PassThrough filter object for the first 3 worlds
-	if test_scene_num.data <= 3:
+	if is_challenge() and not at_goal(turn, 0.0):
+		# Only filter in z axis to remove table and stand
+		passthrough = cloud_filtered.make_passthrough_filter()
+		passthrough.set_filter_field_name('y')
+		axis_min = 0.1
+		axis_max = 0.1
+		passthrough.set_filter_limits(axis_min, axis_max)
+		x_indices = passthrough.filter()
+		cloud_filtered = passthrough.filter()
+
+		passthrough.set_filter_field_name('z')
+		axis_min = 0.3
+		axis_max = 2.0
+		passthrough.set_filter_limits (axis_min, axis_max)
+		# Finally use the filter function to obtain the resultant point cloud. 
+		cloud_filtered = passthrough.filter()
+	else:	# filter both y and z axes
 		passthrough = cloud_filtered.make_passthrough_filter()
 		# Assign axis and range to the passthrough filter object.
 		# first filter in y axis to remove bins
@@ -138,16 +158,9 @@ def pcl_callback(pcl_msg):
 		axis_min = 0.6
 		axis_max = 2.0
 		passthrough.set_filter_limits (axis_min, axis_max)
-	else:
-		# now filter in z axis to remove table and stand
-		passthrough = cloud_filtered.make_passthrough_filter()
-		passthrough.set_filter_field_name('z')
-		axis_min = 0.3
-		axis_max = 2.0
-		passthrough.set_filter_limits (axis_min, axis_max)
+		# Finally use the filter function to obtain the resultant point cloud. 
+		cloud_filtered = passthrough.filter()
 
-	# Finally use the filter function to obtain the resultant point cloud. 
-	cloud_filtered = passthrough.filter()
 	
 	# RANSAC plane segmentation
 	# Create the segmentation object
@@ -313,8 +326,11 @@ def pcl_callback(pcl_msg):
 	# Add some logic to determine whether or not the object detections are robust
 	# before calling pr2_mover()
 	try:
-		if not pipeline_only and len(detected_objects) > 0 and (with_collision_map == False or center_done == True):
-			pr2_mover(detected_objects)
+		if len(detected_objects) > 0:
+			if pipeline_only or with_collision_map:
+				print "Skipping movements"
+			else:
+				pr2_mover(detected_objects)
 
 	except rospy.ROSInterruptException:
 		pass
@@ -331,7 +347,7 @@ def pr2_mover(detected_objects_list):
     # Initialize variables
 
     labels = []
-    centroids = [] # to be list of tuples (x, y, z)
+    centroids = [] # a list of tuples (x, y, z)
     dict_list = []
     object_name = String()
     object_group = String()
@@ -373,9 +389,12 @@ def pr2_mover(detected_objects_list):
 		labels.append(the_object.label)
 		points_arr = ros_to_pcl(the_object.cloud).to_array()
 		centroid = np.mean(points_arr, axis=0)[:3]
+		top = np.max(points_arr, axis=0)[:3]
+		bot = np.min(points_arr, axis=0)[:3]
+		height = np.asscalar(top[2])-np.asscalar(bot[2])
 		centroid = [np.asscalar(centroid[0]),np.asscalar(centroid[1]),np.asscalar(centroid[2])]
 		centroids.append(centroid)
-		print "Found %s at: %f %f %f" % (object_name.data, centroid[0], centroid[1], centroid[2])
+		print "Found %s at: %f %f %f height=%f" % (object_name.data, centroid[0], centroid[1], centroid[2], height)
 
         	# Assign the arm to be used for pick_place
 		if object_group.data == 'green':
@@ -391,7 +410,7 @@ def pr2_mover(detected_objects_list):
 
 		pick_pose.position.x = centroid[0]
 		pick_pose.position.y = centroid[1]
-		pick_pose.position.z = centroid[2]
+		pick_pose.position.z = centroid[2]#-height/2.0
 
 		print "Scene %d, picking up object %s that I found, with my %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
 
@@ -427,8 +446,6 @@ def pr2_mover(detected_objects_list):
 
 if __name__ == '__main__':
 
-	test_scene_num = Int32()
-
 	pipeline_only = False			# for testing, just do the recoginition pipeline and skip PR2 movement
 	with_collision_map = False		# calculate the collision map for challenge.world
 	with_object_collision_map = False	# calculate the object collision map
@@ -441,23 +458,41 @@ if __name__ == '__main__':
 	center_done = False
 
 	# Parse arguments
-	arg = 1
-	if len(sys.argv) >= 2:
-		if sys.argv[arg] == "pipeline_only":
-			pipeline_only = True
-			print "Running pipeline only"
-		if sys.argv[arg] == "with_collision_map":
-			with_collision_map = True
-			print "With Collision map"
-		if sys.argv[arg] == "with_object_collision_map":
-			with_object_collision_map = True
-			print "With Object Collision map"
-		if sys.argv[arg] == "yaml_only":
-			yaml_only = True
-			print "YAML only"
-		if sys.argv[arg] == "help":
-			print "%s: [ pipeline_only | with_collision_map | with_object_collision_map | yaml_only | help ]" % sys.argv[0]
-			exit()
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                    action="store_true")
+	parser.add_argument("-p", "--pipeline_only", help="pipeline only, no PR2 movement",
+                    action="store_true")
+	parser.add_argument("-y", "--yaml_only", help="YAML only, no PR2 movement",
+                    action="store_true")
+	parser.add_argument("-o", "--with_object_collision_map", help="add object collision map",
+                    action="store_true")
+	parser.add_argument("-m", "--with_collision_map", help="add table collision map",
+                    action="store_true")
+
+	args = parser.parse_args()
+
+	if args.verbose:
+    		print "verbosity turned on"
+
+	if args.pipeline_only:
+    		print "pipeline_only turned on"
+		pipeline_only = True
+
+	if args.yaml_only:
+    		print "yaml_only turned on"
+		yaml_only = True
+
+	if args.with_collision_map:
+    		print "with_collision_map turned on"
+		with_collision_map = True
+
+	if args.with_object_collision_map:
+    		print "with_object_collision_map turned on"
+		with_object_collision_map = True
+
+	test_scene_num = Int32()
 
 	# ROS node initialization
 
