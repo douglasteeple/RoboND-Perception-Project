@@ -287,6 +287,17 @@ I ran the train_svm.py model to train an SVM classifier on the labeled set of fe
 
 `rosrun sensor_stick train_svm.py`
 
+With these results for a training set of 100 scans, and using a linera kernel.
+
+```
+doug@doug-Ubuntu:~/catkin_ws$ rosrun sensor_stick train_svm.py
+Features in Training Set: 800
+Invalid Features in Training set: 0
+Scores for linear kernel: [ 0.90625  0.8875   0.86875  0.88125  0.88125]
+Accuracy: 0.89 (+/- 0.02)
+accuracy score: 0.885
+```
+
 ### Other Changes
 
 #### Changes to pick_place_project.launch
@@ -377,8 +388,8 @@ def ros_to_pcl2(ros_cloud1, ros_cloud2):
 
 | ***Confusion Matrix*** |
 |:-------------:|
-| ![Confusion Matrix](output/ConfusionMatrix.png) |
-| *** 76% score, not great, but adequate *** |
+| ![Confusion Matrix](output/figure_linear.png) |
+| *** 89% score, not great, but adequate *** |
 
 #### Test Images Showing Labeling
 
