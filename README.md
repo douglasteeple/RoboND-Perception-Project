@@ -905,10 +905,9 @@ I then called `turn_pr2` in the project_template.py `pr_mover()` function:
 			if at_goal(turn, 0.0):
 				center_done = True
 ```
-Note that this code is conditionally called as it is very slow to execute.
+Note that this code is conditionally called as it is very slow to execute. After visiting the right turn and left turn I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
 
-11. I rotated the robot back to its original state, in the 3rd call to turn_pr2 to 0.0 radians.
-12. The main body of `pr2_mover` located the objects from the request list in the detected objects list, calculated the centroids of the objects and finally called the pick_place_routine to move the PR2, and saved the output in a YAML file.
+11. The main body of `pr2_mover` located the objects from the request list in the detected objects list, calculated the centroids of the objects and finally called the pick_place_routine to move the PR2, and saved the output in a YAML file.
 ```
     for i in range(len(object_list_param)):
 	request_count += 1
@@ -964,7 +963,7 @@ Note that this code is conditionally called as it is very slow to execute.
 		yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
 		dict_list.append(yaml_dict)
 ```
-13. I created a ROS Client for the “pick_place_routine” rosservice:
+12. I created a ROS Client for the “pick_place_routine” rosservice:
 ```
 	
 		if yaml_only == False:
@@ -976,7 +975,7 @@ Note that this code is conditionally called as it is very slow to execute.
 				pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
 ```
-14. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
+13. I passed the messages to the `pick_place_routine` service, and the selected arm performed the pick and place operations and displayed the trajectory in the RViz window.
 ```
 				# Insert message variables to be sent as a service request
 				resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
@@ -988,11 +987,11 @@ Note that this code is conditionally called as it is very slow to execute.
         		except rospy.ServiceException, e:
 				print "Service call failed: %s" % e
 ```
-15. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. 
+14. I only placed two of the three objects from the pick list for test1.world in their respective dropoff box and could not complete the challenge by adding all three. 
 
 ![Test1 Results](output/test1results.jpg)
 
-Completing this task required adding the objects that the PR2 was not currently picking to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion.
+Completing this task required adding the objects that the PR2 was not currently picking up to the collision map. The reason for this is that the PR2 arm is programmed to go erratic after placing the object with the effect of knocking the remaining objects on the table all over the room - and thus preventing task completion. I created the composite collision map of the table and the object not currently being picked up as below:
 
 ![Object Collision Map](output/objectcollisionmap.png)
 
@@ -1010,9 +1009,9 @@ Collision map with objects not being picked up added to map.
 		pcl_collision_pub.publish(ros_composite_map)
 ```
 
-I also wrote `ros_to_pcl2` a function that concatenates to ros messages and creates a compsite pcl map.
+I  wrote `ros_to_pcl2`, a function that concatenates to ros messages and creates a composite map.
 
-16. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
+15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
 
 To make the models and worlds more consistent I copied challenge.world to test4.world and test3.yaml to test4.yaml. In this way I could just set the scene number to 4 to run the challenge. I added a command line parameter `with_collision_map` to enable scanning for objects to the left and right of center.
