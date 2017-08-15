@@ -398,6 +398,22 @@ def ros_to_pcl2(ros_cloud1, ros_cloud2):
 
 ```
 
+Which I used when creating a composite collision map of the table and the objects not being picked up:
+
+```
+	# First publish all object not in the request list as collision objects
+	if with_object_collision_map == True:
+		ros_composite_map = pcl_to_ros(collision_map)
+	    	for the_object in detected_objects_list:
+		    if the_object.label != object_name.data:
+			pcl_composite_map = ros_to_pcl2(ros_composite_map, the_object.cloud)	# append the new object to the collision map
+			ros_composite_map = pcl_to_ros(pcl_composite_map)
+			print "Publishing %s as a collision object of %s" % (the_object.label, object_name.data)
+
+		pcl_collision_pub.publish(ros_composite_map)
+
+```
+
 ### Results
 
 <center>
