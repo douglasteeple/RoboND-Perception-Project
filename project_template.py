@@ -138,9 +138,16 @@ def pcl_callback(pcl_msg):
 		axis_min = 0.6
 		axis_max = 2.0
 		passthrough.set_filter_limits (axis_min, axis_max)
+	else:
+		# now filter in z axis to remove table and stand
+		passthrough = cloud_filtered.make_passthrough_filter()
+		passthrough.set_filter_field_name('z')
+		axis_min = 0.3
+		axis_max = 2.0
+		passthrough.set_filter_limits (axis_min, axis_max)
 
-		# Finally use the filter function to obtain the resultant point cloud. 
-		cloud_filtered = passthrough.filter()
+	# Finally use the filter function to obtain the resultant point cloud. 
+	cloud_filtered = passthrough.filter()
 	
 	# RANSAC plane segmentation
 	# Create the segmentation object
@@ -220,7 +227,8 @@ def pcl_callback(pcl_msg):
 	plotting = False
 	trimming = False
 	# Classify the clusters! (loop through each detected cluster one at a time)
-	for index, pts_list in enumerate(cluster_indices):
+	if at_goal(turn, np.pi/2.0) or at_goal(turn, -np.pi/2.0) or at_goal(turn, 0.0):	# make sure PR2 is stopped
+	    for index, pts_list in enumerate(cluster_indices):
 		# Grab the points for the cluster
 		pcl_cluster = cloud_objects.extract(pts_list)
 
@@ -334,8 +342,6 @@ def pr2_mover(detected_objects_list):
     # get parameters
     # the objects that we must pick up
     object_list_param = rospy.get_param('/object_list')
-    # scene number from modified launch file
-    test_scene_num.data = rospy.get_param('/test_scene_num')
 
     request_count = 0
     success_count = 0
@@ -461,6 +467,11 @@ if __name__ == '__main__':
 	detected_objects = []
 
 	collision_map = pcl.PointCloud()
+
+	# get scene number from modified launch file
+	test_scene_num.data = rospy.get_param('/test_scene_num')
+	print "Test scene %d" % test_scene_num.data
+
 
 	# Create Subscribers
 
