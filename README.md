@@ -334,23 +334,39 @@ I added argument parsing to main to selectivley excercise various parts of the p
 	center_done = False
 
 	# Parse arguments
-	arg = 1
-	if len(sys.argv) >= 2:
-		if sys.argv[arg] == "pipeline_only":
-			pipeline_only = True
-			print "Running pipeline only"
-		if sys.argv[arg] == "with_collision_map":
-			with_collision_map = True
-			print "With Collision map"
-		if sys.argv[arg] == "with_object_collision_map":
-			with_object_collision_map = True
-			print "With Object Collision map"
-		if sys.argv[arg] == "yaml_only":
-			yaml_only = True
-			print "YAML only"
-		if sys.argv[arg] == "help":
-			print "%s: [ pipeline_only | with_collision_map | with_object_collision_map | yaml_only | help ]" % sys.argv[0]
-			exit()
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                    action="store_true")
+	parser.add_argument("-p", "--pipeline_only", help="pipeline only, no PR2 movement",
+                    action="store_true")
+	parser.add_argument("-y", "--yaml_only", help="YAML only, no PR2 movement",
+                    action="store_true")
+	parser.add_argument("-o", "--with_object_collision_map", help="add object collision map",
+                    action="store_true")
+	parser.add_argument("-m", "--with_collision_map", help="add table collision map",
+                    action="store_true")
+
+	args = parser.parse_args()
+
+	if args.verbose:
+    		print "verbosity turned on"
+
+	if args.pipeline_only:
+    		print "pipeline_only turned on"
+		pipeline_only = True
+
+	if args.yaml_only:
+    		print "yaml_only turned on"
+		yaml_only = True
+
+	if args.with_collision_map:
+    		print "with_collision_map turned on"
+		with_collision_map = True
+
+	if args.with_object_collision_map:
+    		print "with_object_collision_map turned on"
+		with_object_collision_map = True
 ```
 
 #### Function `ros_to_pcl2`
