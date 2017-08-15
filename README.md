@@ -287,7 +287,7 @@ I ran the train_svm.py model to train an SVM classifier on the labeled set of fe
 
 `rosrun sensor_stick train_svm.py`
 
-With these results for a training set of 100 scans, and using a linera kernel.
+With these results for a training set of 100 scans, and using a linear kernel.
 
 ```
 doug@doug-Ubuntu:~/catkin_ws$ rosrun sensor_stick train_svm.py
