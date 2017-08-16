@@ -126,21 +126,28 @@ def pcl_callback(pcl_msg):
 	
 	# Create a PassThrough filter object for the first 3 worlds
 	if is_challenge() and not at_goal(turn, 0.0):
-		# Only filter in z axis to remove table and stand
+		# Filter the y axis to remove outlying remove table and stand
 		passthrough = cloud_filtered.make_passthrough_filter()
 		passthrough.set_filter_field_name('y')
-		axis_min = 0.1
-		axis_max = 0.1
+		axis_min = -0.2
+		axis_max = 0.2
 		passthrough.set_filter_limits(axis_min, axis_max)
 		x_indices = passthrough.filter()
 		cloud_filtered = passthrough.filter()
-
+				
+		# Filter out the top table. 
 		passthrough.set_filter_field_name('z')
-		axis_min = 0.3
 		axis_max = 2.0
+		axis_min = 0.65
 		passthrough.set_filter_limits (axis_min, axis_max)
-		# Finally use the filter function to obtain the resultant point cloud. 
-		cloud_filtered = passthrough.filter()
+		top_cloud = passthrough.filter()
+		
+		# Filter out the bottom table. 
+		axis_max = 0.58
+		axis_min = 0.12
+		passthrough.set_filter_limits (axis_min, axis_max)
+		bottom_cloud = passthrough.filter()
+		cloud_filtered = ros_to_pcl2(pcl_to_ros(bottom_cloud), pcl_to_ros(top_cloud))
 	else:	# filter both y and z axes
 		passthrough = cloud_filtered.make_passthrough_filter()
 		# Assign axis and range to the passthrough filter object.
@@ -233,14 +240,17 @@ def pcl_callback(pcl_msg):
 	pcl_objects_pub.publish(ros_cloud_objects)
 	pcl_table_pub.publish(ros_cloud_table)
 	pcl_cluster_pub.publish(ros_cluster_cloud)
-	pcl_collision_pub.publish(ros_cloud_table)
+	#pcl_collision_pub.publish(ros_cloud_table)
 
 	# Exercise-3: 
 
 	plotting = False
 	trimming = False
+	far_right = -np.pi/2.0 - 0.3
+	far_left = np.pi/2.0 + 0.3
+
 	# Classify the clusters! (loop through each detected cluster one at a time)
-	if at_goal(turn, np.pi/2.0) or at_goal(turn, -np.pi/2.0) or at_goal(turn, 0.0):	# make sure PR2 is stopped
+	if at_goal(turn, far_left) or at_goal(turn, far_right) or at_goal(turn, 0.0):	# make sure PR2 is stopped
 	    for index, pts_list in enumerate(cluster_indices):
 		# Grab the points for the cluster
 		pcl_cluster = cloud_objects.extract(pts_list)
@@ -308,14 +318,14 @@ def pcl_callback(pcl_msg):
 	if with_collision_map == True and center_done == False:
 		print "Sending command to scan for obstacles..."
 		if right_done == False:
-			turn = turn_pr2(-np.pi/2.0,False)	# right
-			print "Turning right at %f radians now." % turn
-			if at_goal(turn, -np.pi/2.0):
+			turn = turn_pr2(far_right, False)	# right
+			print "Turning right, at %f radians now." % turn
+			if at_goal(turn, far_right):
 				right_done = True
 		elif left_done == False:
-        		turn = turn_pr2(np.pi/2.0,False)	# left
- 			print "Turning left at %f radians now." % turn
-			if at_goal(turn, np.pi/2.0):
+        		turn = turn_pr2(far_left, False)	# left
+ 			print "Turning left, at %f radians now." % turn
+			if at_goal(turn, far_left):
 				left_done = True
 	       	elif center_done == False:
  			turn = turn_pr2(0.0,False)		# back home
@@ -410,7 +420,7 @@ def pr2_mover(detected_objects_list):
 
 		pick_pose.position.x = centroid[0]
 		pick_pose.position.y = centroid[1]
-		pick_pose.position.z = centroid[2]#-height/2.0
+		pick_pose.position.z = centroid[2]-height
 
 		print "Scene %d, picking up object %s that I found, with my %s arm, and placing it in the %s bin." % (test_scene_num.data, object_name.data, arm_name.data, object_group.data)
 
