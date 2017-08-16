@@ -1011,6 +1011,21 @@ Collision map with objects not being picked up added to map.
 
 I  wrote `ros_to_pcl2`, a function that concatenates to ros messages and creates a composite map.
 
+I also had trouble with the PR2 not picking up the objects. I noted that the world models had empty entries for friction. So I added friction:
+
+```
+          <surface>
+            <friction>
+              <ode mu="10.0" mu2="10.0" fdir1="0 0 0" slip1="0" slip2="0"/>
+            </friction>
+            <bounce restitution_coefficient="0" threshold="1000000.0"/>
+            <contact>
+              <ode soft_cfm="0" soft_erp="0.2" kp="1e10" kd="1" max_vel="100.0" min_depth="0.0001"/>
+            </contact>
+          </surface>
+```
+This helped in picking up the objects. Other fixes such as waiting longer to grip were ineffective.
+
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
 
