@@ -1024,7 +1024,8 @@ I also had trouble with the PR2 not picking up the objects. I noted that the wor
             </contact>
           </surface>
 ```
-This helped in picking up the objects. Other fixes such as waiting longer to grip were ineffective.
+This helped in picking up the objects. I got the values from the ROS WIki Tutorial 'Create you own world': http://wiki.ros.org/cob_gazebo_worlds/Tutorials/Create%20your%20own%20world
+Other fixes such as waiting longer to grip were ineffective.
 
 15. I loaded up the `challenge.world` scenario to try to get the perception pipeline working there.
 ![Challenge World](output/challenge.jpg)
